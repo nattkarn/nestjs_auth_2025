@@ -1,0 +1,43 @@
+model User {
+  id                String             @id @default(uuid())
+  username          String             @unique
+  email             String             @unique
+  password          String
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  status            AccountStatus      @default(INACTIVE)
+  activated         Boolean            @default(false)
+
+  roleId            String
+  role              Role               @relation(fields: [roleId], references: [id])
+  
+  verificationToken VerificationToken?
+}
+
+model Role {
+  id          String       @id @default(uuid())
+  name        String       @unique // e.g., "ADMIN", "USER"
+  users       User[]
+  permissions Permission[] @relation("RolePermissions")
+}
+
+model Permission {
+  id    String @id @default(uuid())
+  name  String @unique // e.g., "user:create", "post:edit", "auth:resend-otp"
+  roles Role[] @relation("RolePermissions")
+}
+
+model VerificationToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+
+  @@index([token])
+}
+
+enum AccountStatus {
+  ACTIVE
+  INACTIVE
+}
