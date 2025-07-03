@@ -1,3 +1,15 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+
+
 model User {
   id                String             @id @default(uuid())
   username          String             @unique
@@ -5,7 +17,7 @@ model User {
   password          String
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
-  status            AccountStatus      @default(INACTIVE)
+  status            AccountStatus      @default(INACTIVE) // INACTIVE, ACTIVE, PENDING, BANNED
   activated         Boolean            @default(false)
 
   roleId            String
@@ -19,12 +31,18 @@ model Role {
   name        String       @unique // e.g., "ADMIN", "USER"
   users       User[]
   permissions Permission[] @relation("RolePermissions")
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  isSystem     Boolean     @default(false)
 }
 
 model Permission {
   id    String @id @default(uuid())
   name  String @unique // e.g., "user:create", "post:edit", "auth:resend-otp"
+  description String?
   roles Role[] @relation("RolePermissions")
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 }
 
 model VerificationToken {
@@ -40,4 +58,6 @@ model VerificationToken {
 enum AccountStatus {
   ACTIVE
   INACTIVE
+  PENDING
+  BANNED
 }

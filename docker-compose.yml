@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16.1
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: nattkarn
+      POSTGRES_PASSWORD: Arm@1144nb
+      POSTGRES_DB: nestjs_auth_2025
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: redis_cache
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+
+volumes:
+  postgres_data:
+  redis_data:
