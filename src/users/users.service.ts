@@ -1,4 +1,5 @@
 import {
+  Inject,
   BadRequestException,
   Injectable,
   InternalServerErrorException,
@@ -16,6 +17,7 @@ import { AccountStatus, Role } from '@prisma/client';
 import { ResendVerificationDto } from './dto/resend-email.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateRoleUserDto } from './dto/update-role-user.dto';
+import { Redis } from 'ioredis';
 
 const hashedPassword = async (password: string) => {
   return await bcrypt.hash(password, 10);
@@ -26,8 +28,8 @@ export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly emailService: EmailService,
+    @Inject('REDIS_CLIENT') private readonly redis: Redis,
   ) {}
-
 
   //For auth only
   async findByUsernameHavePassword(data: { username: string }) {
@@ -45,8 +47,6 @@ export class UsersService {
           role: true,
           status: true,
           password: true,
-
-          
         },
       });
 
@@ -197,15 +197,15 @@ export class UsersService {
       where: { token },
       include: { user: true },
     });
-  
+
     if (!verification) {
       throw new NotFoundException('Token ไม่ถูกต้องหรือไม่มีในระบบ');
     }
-  
+
     if (verification.expiresAt < new Date()) {
       throw new BadRequestException('Token หมดอายุแล้ว');
     }
-  
+
     // อัปเดตสถานะบัญชี
     await this.prisma.user.update({
       where: { id: verification.userId },
@@ -214,12 +214,12 @@ export class UsersService {
         status: 'ACTIVE',
       },
     });
-  
+
     // ลบ token ทิ้งหลังใช้งาน
     await this.prisma.verificationToken.delete({
       where: { token },
     });
-  
+
     return {
       message: 'ยืนยันอีเมลเรียบร้อยแล้ว ✅',
       httpStatus: 200,
@@ -241,7 +241,19 @@ export class UsersService {
   }
 
   async findByUsername(data: { username: string }) {
+    const cacheKey = `user:info:${data.username}`;
+
     try {
+      // 🔍 1. ตรวจ Redis ก่อน
+      const cached = await this.redis.get(cacheKey);
+      if (cached) {
+        return {
+          message: 'User found (from cache)',
+          httpStatus: 200,
+          data: JSON.parse(cached),
+        };
+      }
+
       const user = await this.prisma.user.findUnique({
         where: {
           username: data.username,
@@ -262,10 +274,13 @@ export class UsersService {
         throw new NotFoundException('User not found');
       }
 
+      // 💾 3. เก็บลง Redis TTL 300 วินาที
+      await this.redis.set(cacheKey, JSON.stringify(user), 'EX', 300);
+
       return {
         message: 'User found successfully',
         httpStatus: 200,
-        data: user
+        data: user,
       };
     } catch (error) {
       throw new NotFoundException('User not found');
@@ -274,6 +289,7 @@ export class UsersService {
 
   async updateUser(id: string, data: UpdateUserDto) {
     try {
+      this.redis.del('user:info:{username}')
       const user = await this.prisma.user.update({
         where: { id },
         data: {
@@ -301,10 +317,8 @@ export class UsersService {
   }
 
   async updateRole(id: string, data: UpdateRoleUserDto) {
-
-    
     try {
-
+      this.redis.del('user:info:{username}')
       const roleId = await this.prisma.role.findUnique({
         where: { name: data.role },
       });
@@ -312,8 +326,6 @@ export class UsersService {
       if (!roleId) {
         throw new NotFoundException('Role not found');
       }
-
-
 
       const user = await this.prisma.user.update({
         where: { id },
@@ -340,9 +352,9 @@ export class UsersService {
     }
   }
 
-
   async deleteUser(id: string) {
     try {
+      this.redis.del('user:info:{username}')
       const user = await this.prisma.user.update({
         where: { id },
         data: {
@@ -360,6 +372,7 @@ export class UsersService {
 
   async reviveUser(id: string) {
     try {
+      this.redis.del('user:info:{username}')
       const user = await this.prisma.user.update({
         where: { id },
         data: {
@@ -374,5 +387,4 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
   }
-
 }
