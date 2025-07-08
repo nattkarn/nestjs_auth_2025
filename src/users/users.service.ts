@@ -63,7 +63,7 @@ export class UsersService {
           email: user.email,
           status: user.status,
           password: user.password,
-          level: user.role.name,
+          role: user.role.name,
         },
       };
     } catch (error) {

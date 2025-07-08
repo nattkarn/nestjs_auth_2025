@@ -26,14 +26,14 @@ export class AuthService {
           return {
             id: isUserExist.data.id,
             username: isUserExist.data.username,
-            level: isUserExist.data.level,
+            role: isUserExist.data.role,
           };
         }
         throw new NotFoundException('User not found or password not match');
       }
 
       async login(user: any) {
-        const payload = { username: user.username, id: user.id, level: user.level };
+        const payload = { username: user.username, id: user.id, role: user.role };
     
         const checkStatus = await this.userService.findByUsername({
           
@@ -53,7 +53,7 @@ export class AuthService {
           message: 'User logged in successfully',
           httpStatus: 200,
           username: user.username,
-          level: user.level,
+          role: user.role,
           token: this.jwtService.sign(payload),
         };
       }

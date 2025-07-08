@@ -29,7 +29,7 @@ export class AuthController {
       maxAge: 60 * 60 * 24 * 1000,
     });
 
-    res.cookie('AppName_user_level', login.level, {
+    res.cookie('role', login.role, {
       httpOnly: false,
       secure: false,
       sameSite: 'strict',
@@ -54,7 +54,7 @@ export class AuthController {
       path: '/',
     });
 
-    res.cookie('AppName_user_level', '', {
+    res.cookie('AppName_user_role', '', {
       httpOnly: false,
       maxAge: 0,
       path: '/',
