@@ -9,9 +9,10 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   app.enableCors({
-    origin: 'http://localhost:3000', // หรือ URL ของ frontend
+    origin: ['http://localhost:3000', 'http://localhost:5000'], // หรือ URL ของ frontend
     credentials: true, // 👈 สำคัญมาก
   });
+
 
   // ✅ Use cookie parser
   app.use(cookieParser());

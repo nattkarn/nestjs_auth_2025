@@ -18,8 +18,10 @@ export class AuthController {
 
   @Post('/login')
   @HttpCode(200)
+  @SkipThrottle()
   @UseGuards(LocalAuthGuard)
   async login(@Request() req: any, @Res({ passthrough: true }) res: Response) {
+    console.log('user req',req.user);
     const login = await this.authService.login(req.user);
 
     res.cookie('AppName_user_token', login.token, {
