@@ -6,7 +6,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateRoleUserDto } from './dto/update-role-user.dto';
 import { Roles } from 'src/auth/strategies/roles.decorator';
-import { RolesGuard } from 'src/auth/rolse.guard';
+import { RolesGuard } from 'src/auth/role.guard';
 
 
 @Controller()

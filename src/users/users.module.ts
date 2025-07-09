@@ -6,7 +6,7 @@ import { EmailService } from 'src/util/email.util';
 import { RedisModule } from 'src/util/redis.module';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { APP_GUARD } from '@nestjs/core';
-import { RolesGuard } from 'src/auth/rolse.guard';
+import { RolesGuard } from 'src/auth/role.guard';
 
 @Module({
   imports: [PrismaModule, RedisModule],
