@@ -67,7 +67,7 @@ npm run dev
 ```
 
 ## เปิด Swagger ได้ที่:
-📚 http://localhost:3000/docs
+📚 http://localhost:5000/docs
 
 ตัวอย่าง Insomnia v.5 Collection: https://github.com/nattkarn/nestjs_auth_2025/blob/master/example_request.yaml
 
