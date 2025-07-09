@@ -21,28 +21,35 @@ export class AuthController {
   @SkipThrottle()
   @UseGuards(LocalAuthGuard)
   async login(@Request() req: any, @Res({ passthrough: true }) res: Response) {
-    console.log('user req',req.user);
+    console.log('user req', req.user);
     const login = await this.authService.login(req.user);
 
     res.cookie('AppName_user_token', login.token, {
       httpOnly: true,
       secure: false,
       sameSite: 'strict',
-      maxAge: 60 * 60 * 24 * 1000,
+      maxAge: 15 * 60 * 1000, //15 นาที
     });
 
-    res.cookie('role', login.role, {
+    res.cookie('AppName_refresh_token', login.refreshToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 วัน
+    });
+
+    res.cookie('AppName_user_role', login.role, {
       httpOnly: false,
       secure: false,
       sameSite: 'strict',
-      maxAge: 60 * 60 * 24 * 1000,
+      maxAge: 15 * 60 * 1000, //15 นาที
     });
 
     res.cookie('AppName_user_name', login.username, {
       httpOnly: false,
       secure: false,
       sameSite: 'strict',
-      maxAge: 60 * 60 * 24 * 1000,
+      maxAge: 15 * 60 * 1000, //15 นาที
     });
     return login;
   }
@@ -51,6 +58,12 @@ export class AuthController {
   @HttpCode(200)
   logout(@Res({ passthrough: true }) res: Response) {
     res.cookie('AppName_user_token', '', {
+      httpOnly: true,
+      maxAge: 0,
+      path: '/',
+    });
+
+    res.cookie('AppName_refresh_token', '', {
       httpOnly: true,
       maxAge: 0,
       path: '/',
@@ -71,6 +84,24 @@ export class AuthController {
     return { success: true };
   }
 
+  @Post('/refresh-token')
+  @HttpCode(200)
+  @SkipThrottle()
+  async refreshToken(@Request() req: any, @Res({ passthrough: true }) res: Response) {
+    const refreshToken = req.cookies['AppName_refresh_token'];
+    const result = await this.authService.refresh(refreshToken);
+
+    // เซต access token ใหม่
+    res.cookie('AppName_user_token', result.token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'strict',
+      maxAge: 15 * 60 * 1000, // 15 นาที
+    });
+
+    return result;
+  }
+
   @Post('/verify-token')
   @HttpCode(200)
   async verifyToken(@Request() req: any) {
@@ -80,8 +111,8 @@ export class AuthController {
 
   @Post('/check-token-expired')
   @SkipThrottle()
-  checkTokenExpired(@Body() body: { token: string }) {
-    const checkTokenExpired = this.authService.verifyToken(body.token);
+  async checkTokenExpired(@Body() body: { token: string }) {
+    const checkTokenExpired = await this.authService.verifyToken(body.token);
     return checkTokenExpired;
   }
 }
